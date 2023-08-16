@@ -1,6 +1,9 @@
-## example
+## wasmkeeper
+
+A simple http server that runs wasm functions.
 
 ### Required
+
 - emscripten
 - https://emscripten.org/docs/getting_started/downloads.html
 
@@ -11,6 +14,7 @@ emcc -o example/func.wasm example/func.c
 ## build
 
 ### Required
+
 - wasmedge v0.11.2
 - jsoncpp v1.9.5
 - https://wasmedge.org/docs/embed/c/reference/0.11.x#wasmedge-installation
