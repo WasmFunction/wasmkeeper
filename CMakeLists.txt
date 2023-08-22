@@ -14,16 +14,3 @@ add_executable(wasmkeeper
 target_link_libraries(wasmkeeper
   PRIVATE wasmedge
   PRIVATE JsonCpp::JsonCpp)
-
-add_executable(test
-  test.cpp
-  src/wasmkeeper/vm.cpp)
-
-target_link_libraries(test
-  PRIVATE wasmedge)
-
-add_executable(test2
-  test2.cpp)
-
-target_link_libraries(test2
-  PRIVATE JsonCpp::JsonCpp)
