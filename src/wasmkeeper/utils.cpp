@@ -25,4 +25,3 @@ bool setup_net_ns(const std::string& netns) {
   close(netFd);
   return true;
 }
-

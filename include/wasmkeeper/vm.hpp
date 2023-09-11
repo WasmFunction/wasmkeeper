@@ -25,10 +25,24 @@ class Config {
 
   ~Config();
 
-  WasmEdge_ConfigureContext* get_conf_cxt() { return ctx; }
+  WasmEdge_ConfigureContext* get_conf_cxt() { return cxt; }
 
  private:
-  WasmEdge_ConfigureContext* ctx;
+  WasmEdge_ConfigureContext* cxt;
+};
+
+class ModuleLoader {
+ public:
+  ModuleLoader(const std::string& filepath);
+
+  ~ModuleLoader();
+
+  static ModuleLoader& build(const std::string& filepath);
+
+  WasmEdge_ASTModuleContext* get_module_cxt() const { return cxt; }
+
+ private:
+  WasmEdge_ASTModuleContext* cxt;
 };
 
 class Vm {
@@ -38,12 +52,14 @@ class Vm {
   ~Vm();
 
   void wasi_init(const std::vector<std::string>& args,
-                const std::vector<std::string>& envs,
-                const std::vector<std::string>& preopens);
+                 const std::vector<std::string>& envs,
+                 const std::vector<std::string>& preopens);
 
-  void run_start(const char* filepath);
+  void load_wasm_from_loader(const ModuleLoader& loader);
+
+  void run();
 
  private:
-  WasmEdge_VMContext* ctx;
+  WasmEdge_VMContext* cxt;
 };
-}  // namespace wasmedge
+}  // namespace wasmkeeper

@@ -27,10 +27,15 @@ int main(int argc, char** argv) {
   setup_net_ns(netns);
 
   std::cout << "[INFO] using mod path: " << modPath << '\n';
+  try {
+    wasmkeeper::ModuleLoader::build(modPath);
+    wasmkeeper::Config::build();
+  } catch (const wasmkeeper::Error& e) {
+    std::cerr << "[ERROR] " << e.what() << '\n';
+    return 1;
+  }
 
   httplib::Server server;
-  wasmkeeper::Config::build();
-
   server.Post("/", [&](const httplib::Request& req, httplib::Response& res) {
     wasmkeeper::Vm vm;
     try {
@@ -38,7 +43,8 @@ int main(int argc, char** argv) {
         auto args = get_args(req.body);
         vm.wasi_init(args, {}, {});
       }
-      vm.run_start(modPath.c_str());
+      vm.load_wasm_from_loader(wasmkeeper::ModuleLoader::build(modPath));
+      vm.run();
 
     } catch (const wasmkeeper::Error& e) {
       std::cerr << "[ERROR] " << e.what() << '\n';
