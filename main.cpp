@@ -31,23 +31,22 @@ int main(int argc, char** argv) {
   httplib::Server server;
   wasmkeeper::Config::build();
 
-  server.Post("/",
-              [&](const httplib::Request& req, httplib::Response& res) {
-                wasmkeeper::Vm vm;
-                try {
-                  if (!req.body.empty()) {
-                    auto args = get_args(req.body);
-                    vm.wasi_init(args, {}, {});
-                  }
-                  vm.run_start(modPath.c_str());
+  server.Post("/", [&](const httplib::Request& req, httplib::Response& res) {
+    wasmkeeper::Vm vm;
+    try {
+      if (!req.body.empty()) {
+        auto args = get_args(req.body);
+        vm.wasi_init(args, {}, {});
+      }
+      vm.run_start(modPath.c_str());
 
-                } catch (const wasmkeeper::Error& e) {
-                  std::cerr << "[ERROR] " << e.what() << '\n';
-                  res.set_content("{\"status\": 1}", "text/plain");
-                  return;
-                }
-                res.set_content("{\"status\": 0}", "text/plain");
-              });
+    } catch (const wasmkeeper::Error& e) {
+      std::cerr << "[ERROR] " << e.what() << '\n';
+      res.set_content("{\"status\": 1}", "text/plain");
+      return;
+    }
+    res.set_content("{\"status\": 0}", "text/plain");
+  });
 
   std::cout << "[INFO] listening at 0.0.0.0:10086.\n";
   server.listen("0.0.0.0", 10086);
