@@ -28,8 +28,8 @@ int main(int argc, char** argv) {
 
   std::cout << "[INFO] using mod path: " << modPath << '\n';
   try {
-    wasmkeeper::ModuleLoader::build(modPath);
     wasmkeeper::Config::build();
+    wasmkeeper::Module::build(modPath);
   } catch (const wasmkeeper::Error& e) {
     std::cerr << "[ERROR] " << e.what() << '\n';
     return 1;
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
         auto args = get_args(req.body);
         vm.wasi_init(args, {}, {});
       }
-      vm.load_wasm_from_loader(wasmkeeper::ModuleLoader::build(modPath));
+      vm.load_wasm_from_loader(wasmkeeper::Module::build(modPath));
       vm.run();
 
     } catch (const wasmkeeper::Error& e) {

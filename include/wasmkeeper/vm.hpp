@@ -25,21 +25,21 @@ class Config {
 
   ~Config();
 
-  WasmEdge_ConfigureContext* get_conf_cxt() { return cxt; }
+  WasmEdge_ConfigureContext* raw() const { return cxt; }
 
  private:
   WasmEdge_ConfigureContext* cxt;
 };
 
-class ModuleLoader {
+class Module {
  public:
-  ModuleLoader(const std::string& filepath);
+  Module(const std::string& filepath);
 
-  ~ModuleLoader();
+  ~Module();
 
-  static ModuleLoader& build(const std::string& filepath);
+  static Module& build(const std::string& filepath);
 
-  WasmEdge_ASTModuleContext* get_module_cxt() const { return cxt; }
+  WasmEdge_ASTModuleContext* raw() const { return cxt; }
 
  private:
   WasmEdge_ASTModuleContext* cxt;
@@ -55,7 +55,7 @@ class Vm {
                  const std::vector<std::string>& envs,
                  const std::vector<std::string>& preopens);
 
-  void load_wasm_from_loader(const ModuleLoader& loader);
+  void load_wasm_from_loader(const Module& loader);
 
   void run();
 
