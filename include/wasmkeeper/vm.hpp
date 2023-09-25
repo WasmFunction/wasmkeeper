@@ -45,7 +45,7 @@ class Config {
  protected:
   Config();
 
-  ~Config() = default;
+  ~Config() = delete;
 
  public:
   static auto make() -> own<Config> { return make_own(new Config); }
@@ -66,7 +66,7 @@ class Module {
  protected:
   Module(const std::string& filepath);
 
-  ~Module() = default;
+  ~Module() = delete;
 
  public:
   static auto make(const std::string& filepath) -> own<Module> {
@@ -89,7 +89,7 @@ class Vm {
  protected:
   Vm();
 
-  ~Vm() = default;
+  ~Vm() = delete;
 
  public:
   static auto make() -> own<Vm> {
