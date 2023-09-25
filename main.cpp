@@ -37,14 +37,15 @@ int main(int argc, char** argv) {
 
   httplib::Server server;
   server.Post("/", [&](const httplib::Request& req, httplib::Response& res) {
-    wasmkeeper::Vm vm;
+    auto vm = wasmkeeper::Vm::make();
     try {
       if (!req.body.empty()) {
         auto args = get_args(req.body);
-        vm.wasi_init(args, {}, {});
+        vm->wasi_init(args, {}, {});
       }
-      vm.load_wasm_from_loader(wasmkeeper::Module::build(modPath));
-      vm.run();
+      auto module = wasmkeeper::Module::build(modPath);
+      vm->load_wasm_from_loader(module);
+      vm->run();
 
     } catch (const wasmkeeper::Error& e) {
       std::cerr << "[ERROR] " << e.what() << '\n';

@@ -3,6 +3,7 @@
 #include <wasmedge/wasmedge.h>
 
 #include <exception>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -11,55 +12,96 @@ class Error : public std::exception {
  public:
   Error(const char* msg) : message(msg) {}
 
-  const char* what() const noexcept override { return message.c_str(); }
+  auto what() const noexcept -> const char* { return message.c_str(); }
 
  private:
   std::string message;
 };
 
-class Config {
+class destroyer {
  public:
-  static Config& build();
+  template <typename T>
+  void operator()(T* ptr) {
+    ptr->destroy();
+  }
+};
 
-  Config();
+template <class T>
+using own = std::unique_ptr<T, destroyer>;
 
-  ~Config();
+template <class T>
+auto make_own(T* ptr) -> own<T> {
+  return own<T>(ptr);
+}
 
-  WasmEdge_ConfigureContext* raw() const { return cxt; }
-
+class Config {
  private:
   WasmEdge_ConfigureContext* cxt;
+
+ private:
+  friend class destroyer;
+  void destroy() { WasmEdge_ConfigureDelete(cxt); }
+
+ protected:
+  Config();
+
+  ~Config() = default;
+
+ public:
+  static auto make() -> own<Config> { return make_own(new Config); }
+
+  static auto build() -> const Config*;
+
+  auto raw() const -> const WasmEdge_ConfigureContext* { return cxt; }
 };
 
 class Module {
- public:
-  Module(const std::string& filepath);
-
-  ~Module();
-
-  static Module& build(const std::string& filepath);
-
-  WasmEdge_ASTModuleContext* raw() const { return cxt; }
-
  private:
   WasmEdge_ASTModuleContext* cxt;
+
+ private:
+  friend class destroyer;
+  void destroy() { WasmEdge_ASTModuleDelete(cxt); }
+
+ protected:
+  Module(const std::string& filepath);
+
+  ~Module() = default;
+
+ public:
+  static auto make(const std::string& filepath) -> own<Module> {
+    return make_own(new Module(filepath));
+  }
+
+  static auto build(const std::string& filepath) -> const Module*;
+
+  auto raw() const -> const WasmEdge_ASTModuleContext* { return cxt; }
 };
 
 class Vm {
- public:
+ private:
+  WasmEdge_VMContext* cxt;
+
+ private:
+  friend class destroyer;
+  void destroy() { WasmEdge_VMDelete(cxt); }
+
+ protected:
   Vm();
 
-  ~Vm();
+  ~Vm() = default;
+
+ public:
+  static auto make() -> own<Vm> {
+    return make_own(new Vm);
+  }
 
   void wasi_init(const std::vector<std::string>& args,
                  const std::vector<std::string>& envs,
                  const std::vector<std::string>& preopens);
 
-  void load_wasm_from_loader(const Module& loader);
+  void load_wasm_from_loader(const Module* loader);
 
   void run();
-
- private:
-  WasmEdge_VMContext* cxt;
 };
 }  // namespace wasmkeeper
