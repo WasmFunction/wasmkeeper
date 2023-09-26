@@ -4,5 +4,8 @@
 #include <string>
 #include <vector>
 
-bool setup_net_ns(const std::string& netns);
+auto setup_net_ns(const std::string& netns) -> bool;
 
+auto info() -> std::ostream&;
+
+auto error() -> std::ostream&;

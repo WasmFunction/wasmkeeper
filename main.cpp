@@ -23,15 +23,15 @@ int main(int argc, char** argv) {
     return app.exit(e);
   }
 
-  std::cout << "[INFO] using netns: " << netns << '\n';
+  info() << "using netns: " << netns << std::endl;
   setup_net_ns(netns);
 
-  std::cout << "[INFO] using mod path: " << modPath << '\n';
+  info() << "using mod path: " << modPath << std::endl;
   try {
     wasmkeeper::Config::build();
     wasmkeeper::Module::build(modPath);
   } catch (const wasmkeeper::Error& e) {
-    std::cerr << "[ERROR] " << e.what() << '\n';
+    error() << e.what() << std::endl;
     return 1;
   }
 
@@ -48,14 +48,14 @@ int main(int argc, char** argv) {
       vm->run();
 
     } catch (const wasmkeeper::Error& e) {
-      std::cerr << "[ERROR] " << e.what() << '\n';
+      error() << e.what() << std::endl;
       res.set_content("{\"status\": 1}", "text/plain");
       return;
     }
     res.set_content("{\"status\": 0}", "text/plain");
   });
 
-  std::cout << "[INFO] listening at 0.0.0.0:10086.\n";
+  info() << "listening at 0.0.0.0:10086." << std::endl;
   server.listen("0.0.0.0", 10086);
 
   return 0;
