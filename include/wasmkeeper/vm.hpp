@@ -45,12 +45,12 @@ class Config {
  protected:
   Config();
 
-  ~Config() = delete;
+  ~Config();
 
  public:
   static auto make() -> own<Config> { return make_own(new Config); }
 
-  static auto build() -> const Config*;
+  static auto build() -> const Config&;
 
   auto raw() const -> const WasmEdge_ConfigureContext* { return cxt; }
 };
@@ -66,14 +66,14 @@ class Module {
  protected:
   Module(const std::string& filepath);
 
-  ~Module() = delete;
+  ~Module();
 
  public:
   static auto make(const std::string& filepath) -> own<Module> {
     return make_own(new Module(filepath));
   }
 
-  static auto build(const std::string& filepath) -> const Module*;
+  static auto build(const std::string& filepath) -> const Module&;
 
   auto raw() const -> const WasmEdge_ASTModuleContext* { return cxt; }
 };
@@ -89,7 +89,7 @@ class Vm {
  protected:
   Vm();
 
-  ~Vm() = delete;
+  ~Vm();
 
  public:
   static auto make() -> own<Vm> {
@@ -100,7 +100,7 @@ class Vm {
                  const std::vector<std::string>& envs,
                  const std::vector<std::string>& preopens);
 
-  void load_wasm_from_loader(const Module* loader);
+  void load_wasm_from_loader(const Module& loader);
 
   void run();
 };

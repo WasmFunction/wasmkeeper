@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
         auto args = get_args(req.body);
         vm->wasi_init(args, {}, {});
       }
-      auto module = wasmkeeper::Module::build(modPath);
+      auto& module = wasmkeeper::Module::build(modPath);
       vm->load_wasm_from_loader(module);
       vm->run();
 

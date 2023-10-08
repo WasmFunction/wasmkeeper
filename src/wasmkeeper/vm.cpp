@@ -5,9 +5,9 @@
 #include <cstring>
 #include <iostream>
 
-auto wasmkeeper::Config::build() -> const wasmkeeper::Config* {
+auto wasmkeeper::Config::build() -> const wasmkeeper::Config& {
   static auto config = make();
-  return config.get();
+  return *config;
 }
 
 wasmkeeper::Config::Config() : cxt(WasmEdge_ConfigureCreate()) {
@@ -18,14 +18,14 @@ wasmkeeper::Config::Config() : cxt(WasmEdge_ConfigureCreate()) {
 }
 
 auto wasmkeeper::Module::build(const std::string& filepath)
-    -> const wasmkeeper::Module* {
+    -> const wasmkeeper::Module& {
   static auto module = make(filepath);
-  return module.get();
+  return *module;
 }
 
 wasmkeeper::Module::Module(const std::string& filepath) {
   WasmEdge_LoaderContext* loadCxt =
-      WasmEdge_LoaderCreate(Config::build()->raw());
+      WasmEdge_LoaderCreate(Config::build().raw());
   WasmEdge_Result res =
       WasmEdge_LoaderParseFromFile(loadCxt, &cxt, filepath.c_str());
   if (!WasmEdge_ResultOK(res)) {
@@ -36,7 +36,7 @@ wasmkeeper::Module::Module(const std::string& filepath) {
 }
 
 wasmkeeper::Vm::Vm() {
-  cxt = WasmEdge_VMCreate(Config::build()->raw(), NULL);
+  cxt = WasmEdge_VMCreate(Config::build().raw(), NULL);
   if (!cxt) {
     throw Error("failed to create wasmedge vm.");
   }
@@ -72,8 +72,8 @@ void wasmkeeper::Vm::wasi_init(const std::vector<std::string>& args,
                                   cpreopens.size());
 }
 
-void wasmkeeper::Vm::load_wasm_from_loader(const Module* loader) {
-  WasmEdge_Result res = WasmEdge_VMLoadWasmFromASTModule(cxt, loader->raw());
+void wasmkeeper::Vm::load_wasm_from_loader(const Module& loader) {
+  WasmEdge_Result res = WasmEdge_VMLoadWasmFromASTModule(cxt, loader.raw());
   if (!WasmEdge_ResultOK(res)) {
     throw Error("failed to load wasi module from loader.");
   }
