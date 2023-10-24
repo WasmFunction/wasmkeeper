@@ -43,5 +43,8 @@ cmake --build .
 ## test
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d '{"args":["White", "Hank"]}' localhost:10086/func
+curl -X POST -H "Content-Type: application/json" -d '{"args":["White", "Hank"]}' localhost:10086
+
+# benchmark
+ab -n 750 -c 10 -p data.json -T application/json http://localhost:10086/
 ```
