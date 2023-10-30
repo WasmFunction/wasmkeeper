@@ -27,7 +27,7 @@ mkdir build && cd build
 cmake .. -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake
 
 # for example
-cmake .. -DCMAKE_TOOLCHAIN_FILE=/home/youtirsind/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake .. -DCMAKE_TOOLCHAIN_FILE=/root/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 ln -s build/compile_commands.json .
 ```
