@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
     try {
       if (!req.body.empty()) {
         wasmkeeper::Request request;
-        if (request.parse(std::string(req.body))) {
+        if (request.parse(req.body)) {
           vm->wasi_init(request.args, {}, {});
         }
       }

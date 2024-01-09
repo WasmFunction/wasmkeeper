@@ -6,9 +6,10 @@
 
 namespace wasmkeeper {
 struct Request {
-  bool parse(std::string&& raw) noexcept {
+  template <class string_type = std::string>
+  bool parse(string_type&& raw) noexcept {
     try {
-      auto json = nlohmann::json::parse(std::move(raw));
+      auto json = nlohmann::json::parse(std::forward<string_type>(raw));
       for (auto&& e : json["args"]) {
         args.push_back(e);
       }
@@ -20,4 +21,4 @@ struct Request {
 
   std::vector<std::string> args;
 };
-}
+}  // namespace wasmkeeper
