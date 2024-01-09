@@ -9,17 +9,17 @@ bool setup_net_ns(const std::string& netns) noexcept {
     return false;
   }
 
-  int netFd = open(netns.c_str(), O_RDONLY);
-  if (netFd == -1) {
+  int net_fd = open(netns.c_str(), O_RDONLY);
+  if (net_fd == -1) {
     errorln("failed to open netns.");
     return false;
   }
 
-  if (setns(netFd, CLONE_NEWNET) == -1) {
+  if (setns(net_fd, CLONE_NEWNET) == -1) {
     errorln("error setns.");
-    close(netFd);
+    close(net_fd);
     return false;
   }
-  close(netFd);
+  close(net_fd);
   return true;
 }

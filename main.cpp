@@ -8,14 +8,18 @@
 #include "wasmkeeper/utils.hpp"
 #include "wasmkeeper/wasmedgepp.hpp"
 
-std::vector<std::string> get_args(const std::string& reqBody);
-
 int main(int argc, char** argv) {
+  constexpr auto ADDR = "0.0.0.0";
+  constexpr int PORT = 10086;
+
+  constexpr auto SUCCESS_RESP = "{\"status\": 0}";
+  constexpr auto FAIL_RESP = "{\"status\": 1}";
+
   CLI::App app{"A simple http server that runs wasm functions."};
   std::string netns = "";
-  std::string modPath = "";
+  std::string mod_path = "";
   app.add_option("-n,--netns", netns, "Network namespace.")->required();
-  app.add_option("-m,--mod-path", modPath, "The path to the wasm module.")
+  app.add_option("-m,--mod-path", mod_path, "The path to the wasm module.")
       ->required();
 
   try {
@@ -29,13 +33,13 @@ int main(int argc, char** argv) {
     errorln("failed to set up netNS. use host instead.");
   }
 
-  info() << "using mod path: " << modPath << std::endl;
+  info() << "using mod path: " << mod_path << std::endl;
 
   std::shared_ptr<wasmkeeper::Config> config;
   std::unique_ptr<wasmkeeper::Module> module;
   try {
     config = std::make_shared<wasmkeeper::Config>();
-    module = std::make_unique<wasmkeeper::Module>(config, modPath);
+    module = std::make_unique<wasmkeeper::Module>(config, mod_path);
   } catch (const wasmkeeper::Error& e) {
     error() << e.what() << std::endl;
     return 1;
@@ -55,14 +59,14 @@ int main(int argc, char** argv) {
       vm->run();
     } catch (const wasmkeeper::Error& e) {
       error() << e.what() << std::endl;
-      res.set_content("{\"status\": 1}", "text/plain");
+      res.set_content(FAIL_RESP, "application/json");
       return;
     }
-    res.set_content("{\"status\": 0}", "text/plain");
+    res.set_content(SUCCESS_RESP, "application/json");
   });
 
-  info() << "listening at 0.0.0.0:10086." << std::endl;
-  server.listen("0.0.0.0", 10086);
+  info() << "wasmkeeper listening at " << ADDR << ":" << PORT << "..." << std::endl;
+  server.listen(ADDR, PORT);
 
   return 0;
 }
