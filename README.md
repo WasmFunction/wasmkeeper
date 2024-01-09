@@ -4,7 +4,7 @@ A simple http server that runs wasm functions.
 
 ### Required
 
-- wasmedge v0.11.2
+- wasmedge (version v0.11.2)
 
   https://wasmedge.org/docs/embed/c/reference/0.11.x#wasmedge-installation
 
