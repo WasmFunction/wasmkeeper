@@ -1,0 +1,17 @@
+{
+  "builtin-baseline": "ce46ba8777d8f899d8dc11afefb8eca39293df39",
+  "dependencies": [
+    {
+      "name": "nlohmann-json",
+      "version>=": "3.11.3"
+    },
+    {
+      "name": "cli11",
+      "version>=": "2.3.2"
+    },
+    {
+      "name": "cpp-httplib",
+      "version>=": "0.14.1"
+    }
+  ]
+}

@@ -1,11 +1,12 @@
 #include <httplib.h>
-#include <json/json.h>
 
-#include <CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include <iostream>
+#include <memory>
 
+#include "wasmkeeper/request.hpp"
 #include "wasmkeeper/utils.hpp"
-#include "wasmkeeper/vm.hpp"
+#include "wasmkeeper/wasmedgepp.hpp"
 
 std::vector<std::string> get_args(const std::string& reqBody);
 
@@ -24,12 +25,17 @@ int main(int argc, char** argv) {
   }
 
   info() << "using netns: " << netns << std::endl;
-  setup_net_ns(netns);
+  if (!setup_net_ns(netns)) {
+    errorln("failed to set up netNS. use host instead.");
+  }
 
   info() << "using mod path: " << modPath << std::endl;
+
+  std::shared_ptr<wasmkeeper::Config> config;
+  std::unique_ptr<wasmkeeper::Module> module;
   try {
-    wasmkeeper::Config::build();
-    wasmkeeper::Module::build(modPath);
+    config = std::make_shared<wasmkeeper::Config>();
+    module = std::make_unique<wasmkeeper::Module>(config, modPath);
   } catch (const wasmkeeper::Error& e) {
     error() << e.what() << std::endl;
     return 1;
@@ -37,16 +43,16 @@ int main(int argc, char** argv) {
 
   httplib::Server server;
   server.Post("/", [&](const httplib::Request& req, httplib::Response& res) {
-    auto vm = wasmkeeper::Vm::make();
+    auto vm = std::make_unique<wasmkeeper::Vm>(config);
     try {
       if (!req.body.empty()) {
-        auto args = get_args(req.body);
-        vm->wasi_init(args, {}, {});
+        wasmkeeper::Request request;
+        if (request.parse(std::string(req.body))) {
+          vm->wasi_init(request.args, {}, {});
+        }
       }
-      auto& module = wasmkeeper::Module::build(modPath);
-      vm->load_wasm_from_loader(module);
+      vm->load_wasm_from_loader(*module);
       vm->run();
-
     } catch (const wasmkeeper::Error& e) {
       error() << e.what() << std::endl;
       res.set_content("{\"status\": 1}", "text/plain");
@@ -59,22 +65,4 @@ int main(int argc, char** argv) {
   server.listen("0.0.0.0", 10086);
 
   return 0;
-}
-
-std::vector<std::string> get_args(const std::string& reqBody) {
-  Json::Value val;
-  Json::Reader reader;
-  if (!reader.parse(reqBody, val)) {
-    throw wasmkeeper::Error("error parsing request data.");
-  }
-  if (!val["args"].isArray()) {
-    throw wasmkeeper::Error("error getting args.");
-  }
-  std::vector<std::string> res;
-  for (const Json::Value& element : val["args"]) {
-    if (element.isString()) {
-      res.push_back(element.asString());
-    }
-  }
-  return res;
 }

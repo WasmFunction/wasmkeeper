@@ -1,11 +1,25 @@
 #pragma once
 
-#include <exception>
+#include <iostream>
 #include <string>
-#include <vector>
 
-auto setup_net_ns(const std::string& netns) -> bool;
+bool setup_net_ns(const std::string& netns) noexcept;
 
-auto info() -> std::ostream&;
+inline auto& info() noexcept {
+  std::cout << "[INFO] ";
+  return std::cout;
+}
 
-auto error() -> std::ostream&;
+inline auto& error() noexcept {
+  std::cerr << "[ERROR] ";
+  return std::cerr;
+}
+
+inline void infoln(const char* message) noexcept {
+  info() << message << std::endl;
+}
+
+inline void errorln(const char* message) noexcept {
+  error() << message << std::endl;
+}
+

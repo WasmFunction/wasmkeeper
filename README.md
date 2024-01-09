@@ -4,40 +4,53 @@ A simple http server that runs wasm functions.
 
 ### Required
 
-- emscripten
-- https://emscripten.org/docs/getting_started/downloads.html
-
-```bash
-emcc -o example/func.wasm example/func.c
-```
-
-## build
-
-### Required
-
 - wasmedge v0.11.2
-- jsoncpp v1.9.5
-- https://wasmedge.org/docs/embed/c/reference/0.11.x#wasmedge-installation
 
-configure
+  https://wasmedge.org/docs/embed/c/reference/0.11.x#wasmedge-installation
 
-```bash
-mkdir build && cd build
+- vcpkg
 
-cmake .. -DCMAKE_TOOLCHAIN_FILE=[vcpkg root]/scripts/buildsystems/vcpkg.cmake
+- g++
 
-# for example
-cmake .. -DCMAKE_TOOLCHAIN_FILE=/root/vcpkg/scripts/buildsystems/vcpkg.cmake
+- cmake (version >= 3.19)
 
-ln -s build/compile_commands.json .
+- make
+
+### Build
+
+**configure**
+
+set `toolchainFile` to the path of `[vcpkg root]/scripts/buildsystems/vcpkg.cmake` in `CMakePresets.json`:
+
+```json
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      ...
+      "toolchainFile": "/home/youtirsin/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      ...
+    }
+  ]
+}
 ```
 
-build
+and then run:
 
 ```bash
-mkdir build && cd build
+cmake --preset=default
+```
 
-cmake --build .
+**build**
+
+```bash
+cmake --build build --target wasmkeeper
+```
+
+**run**
+
+```bash
+build/wasmkeeper --netns xxx --mod-path ./example/func.wasm
 ```
 
 ## test
