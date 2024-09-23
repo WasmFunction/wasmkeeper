@@ -1,12 +1,99 @@
 #include <httplib.h>
-
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <memory>
-
+#include <unistd.h>    // for pipe, dup2, read, close
+#include <sstream>     // for std::ostringstream
+#include <cstring>     // for strerror
+#include <cerrno>      // for errno
 #include "wasmkeeper/request.hpp"
 #include "wasmkeeper/utils.hpp"
 #include "wasmkeeper/wasmedgepp.hpp"
+
+
+
+std::string escape_json(const std::string& s) {
+    std::ostringstream o;
+    for (auto c = s.cbegin(); c != s.cend(); c++) {
+        switch (*c) {
+        case '"': o << "\\\""; break;
+        case '\\': o << "\\\\"; break;
+        case '\b': o << "\\b"; break;
+        case '\f': o << "\\f"; break;
+        case '\n': o << "\\n"; break;
+        case '\r': o << "\\r"; break;
+        case '\t': o << "\\t"; break;
+        default:
+            if ('\x00' <= *c && *c <= '\x1f') {
+                o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)*c;
+            } else {
+                o << *c;
+            }
+        }
+    }
+    return o.str();
+}
+
+std::string format_output(const std::string& raw_output) {
+    std::istringstream stream(raw_output);
+    std::string line;
+    std::string formatted_output = "[\n";
+    
+    while (std::getline(stream, line)) {
+        formatted_output += "  \"" + escape_json(line) + "\",\n"; // 使用 escape_json 转义
+    }
+
+    if (formatted_output.size() > 2) {
+        formatted_output.pop_back();
+        formatted_output.pop_back();
+    }
+
+    formatted_output += "\n]";
+    return formatted_output;
+}
+
+std::string capture_stdout_with_pipe(wasmkeeper::Vm &vm) {
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        std::cerr << "Error creating pipe: " << strerror(errno) << std::endl;
+        return "";
+    }
+
+    int stdout_save = dup(STDOUT_FILENO);
+    if (stdout_save == -1) {
+        std::cerr << "Error saving stdout: " << strerror(errno) << std::endl;
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return "";
+    }
+
+    if (dup2(pipefd[1], STDOUT_FILENO) == -1) {
+        std::cerr << "Error redirecting stdout: " << strerror(errno) << std::endl;
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return "";
+    }
+    close(pipefd[1]); 
+
+    vm.run();  
+
+    if (dup2(stdout_save, STDOUT_FILENO) == -1) {
+        std::cerr << "Error restoring stdout: " << strerror(errno) << std::endl;
+        close(pipefd[0]);
+        return "";
+    }
+    close(stdout_save);  
+
+    std::ostringstream oss;
+    char buffer[256];
+    ssize_t count;
+    while ((count = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+        oss.write(buffer, count);
+    }
+    close(pipefd[0]);
+
+    return oss.str();
+}
 
 int main(int argc, char** argv) {
   constexpr auto ADDR = "0.0.0.0";
@@ -47,22 +134,27 @@ int main(int argc, char** argv) {
 
   httplib::Server server;
   server.Post("/", [&](const httplib::Request& req, httplib::Response& res) {
+    std::string captured_output;
     auto vm = std::make_unique<wasmkeeper::Vm>(config);
+    wasmkeeper::Request request; 
     try {
+      std::vector<std::string> args = {"program"};
       if (!req.body.empty()) {
-        wasmkeeper::Request request;
         if (request.parse(req.body)) {
-          vm->wasi_init(request.args, {}, {});
+            args.insert(args.end(), request.args.begin(), request.args.end());
         }
       }
       vm->load_wasm_from_loader(*module);
-      vm->run();
+      vm->wasi_init(args, {}, {});
+      captured_output = capture_stdout_with_pipe(*vm);
+      std::string formatted_output = format_output(captured_output);
+      std::string success_response = "{\"status\": 0, \"output\": " + formatted_output + "}";
+      res.set_content(success_response, "application/json");
     } catch (const wasmkeeper::Error& e) {
-      error() << e.what() << std::endl;
-      res.set_content(FAIL_RESP, "application/json");
+      std::string error_response = "{\"status\": 1, \"error\": \"" + escape_json(e.what()) + "\"}";
+      res.set_content(error_response, "application/json");
       return;
     }
-    res.set_content(SUCCESS_RESP, "application/json");
   });
 
   info() << "wasmkeeper listening at " << ADDR << ":" << PORT << "..." << std::endl;
